@@ -11,8 +11,6 @@ export async function POST() {
     const pocketId = generatePocketId();
     const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
 
-    console.log("try");
-
     try {
       await pool.query(
         `INSERT INTO pockets (pocket_id, expires_at) VALUES ($1, $2)`,
