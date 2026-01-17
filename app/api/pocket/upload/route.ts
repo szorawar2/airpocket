@@ -1,4 +1,5 @@
 import { pool } from "../../lib/db";
+import { validatePocket } from "../../lib/pocket";
 import fs from "fs/promises";
 import path from "path";
 
@@ -6,16 +7,21 @@ const baseDir = path.join(process.cwd(), "pocket_files");
 
 export async function POST(req: Request) {
   const formData = await req.formData();
-
   var text = formData.get("text");
-
+  const files = formData
+    .getAll("files")
+    .filter((f): f is File => f instanceof File);
   const instance_hash = formData.get("instanceHash") as string;
+
+  try {
+    validatePocket(instance_hash);
+  } catch (error) {
+    return Response.json({ message: "Pocket does not exist", error: error });
+  }
+
   if (typeof instance_hash !== "string") {
     return Response.json({ error: "Invalid instance" }, { status: 400 });
   }
-
-  const pocketDir = path.join(baseDir, instance_hash);
-  await fs.mkdir(pocketDir, { recursive: true });
 
   var result = null;
 
@@ -31,10 +37,6 @@ export async function POST(req: Request) {
     return Response.json({ error: "Database Error, Please upload again" });
   }
 
-  const files = formData
-    .getAll("files")
-    .filter((f): f is File => f instanceof File);
-
   if (files.length === 0)
     return Response.json({ message: "Upload succesful", status: 200 });
 
@@ -43,11 +45,18 @@ export async function POST(req: Request) {
 
   const batch_id = result.rows[0].batch_id;
 
+  const pocketDir = path.join(baseDir, instance_hash);
+  await fs.mkdir(pocketDir, { recursive: true });
+
   for (const file of files) {
     await uploadFile(file);
   }
 
   return Response.json({ message: "Upload succesful", status: 200 });
+
+  /*
+   **Functions
+   */
 
   async function uploadFile(file: File) {
     var file_result;

@@ -25,7 +25,10 @@ export default function HomePage() {
               Create Pocket
             </button>
 
-            <button className="rounded-lg border border-gray-300 px-6 py-3 hover:bg-gray-50 transition">
+            <button
+              className="rounded-lg border border-gray-300 px-6 py-3 hover:bg-gray-50 transition"
+              onClick={() => router.push("/enter")}
+            >
               Enter Pocket
             </button>
           </div>

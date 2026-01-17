@@ -2,7 +2,13 @@
 
 import { useState, useRef } from "react";
 
-export default function InputBar({ instanceHash }: { instanceHash: string }) {
+export default function InputBar({
+  instanceHash,
+  setRefreshKey,
+}: {
+  instanceHash: string;
+  setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const formDataRef = useRef<FormData | null>(null);
@@ -12,7 +18,7 @@ export default function InputBar({ instanceHash }: { instanceHash: string }) {
     setFiles(selected);
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const fd = new FormData();
     fd.set("instanceHash", instanceHash);
@@ -21,10 +27,16 @@ export default function InputBar({ instanceHash }: { instanceHash: string }) {
 
     formDataRef.current = fd;
 
-    fetch("/api/pocket/upload", {
+    const res = await fetch("/api/pocket/upload", {
       method: "POST",
       body: fd,
     });
+
+    if (!res.ok) {
+      console.error("Upload failed");
+      return;
+    }
+    setRefreshKey((key) => (key += 1));
   }
 
   return (
