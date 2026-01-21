@@ -1,4 +1,4 @@
-import { pool } from "../../lib/db";
+import { pool } from "@/app/api/lib/db";
 import { hashPasscode, generateInstanceHash } from "../../lib/hash";
 import fs from "fs/promises";
 import path from "path";
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       AND status = 'reserved'
     RETURNING pocket_id
     `,
-    [instanceHash, passcodeHash, expiresAt, pocketId]
+    [instanceHash, passcodeHash, expiresAt, pocketId],
   );
 
   if (res.rowCount === 0) {

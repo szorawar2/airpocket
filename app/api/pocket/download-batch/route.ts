@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     FROM pocket_items
     WHERE instance_hash = $1 AND batch_id = $2
     `,
-    [instanceHash, batchId]
+    [instanceHash, batchId],
   );
 
   if (rows.length === 0) {

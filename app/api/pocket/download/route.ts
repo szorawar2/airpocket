@@ -1,6 +1,6 @@
 import "server-only";
 import { NextResponse } from "next/server";
-import { pool } from "../../lib/db";
+import { pool } from "@/app/api/lib/db";
 import fs from "fs/promises";
 import path from "path";
 
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 
   const pocketStatus = await pool.query(
     "SELECT status FROM pockets WHERE instance_hash = $1",
-    [instance_hash]
+    [instance_hash],
   );
 
   if (pocketStatus.rowCount === 0 || pocketStatus.rows[0].status !== "active") {
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     `SELECT file_name, original_file_name, burn
      FROM pocket_items
      WHERE instance_hash = $1 AND batch_id = $2 AND file_id = $3`,
-    [instance_hash, batch_id, file_id]
+    [instance_hash, batch_id, file_id],
   );
 
   if (result.rowCount === 0) {
@@ -66,8 +66,8 @@ export async function GET(req: Request) {
   // Burn-on-download if needed
   if (file.burn) {
     await pool.query(
-      `DELETE FROM data WHERE instance_hash = $1 AND batch_id = $2 AND file_id = $3`,
-      [instance_hash, batch_id, file_id]
+      `DELETE FROM pocket_items WHERE instance_hash = $1 AND batch_id = $2 AND file_id = $3`,
+      [instance_hash, batch_id, file_id],
     );
     await fs.unlink(filePath).catch(() => {});
   }

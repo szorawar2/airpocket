@@ -16,5 +16,11 @@ export default async function PocketPage({
     return <div>Pocket expired</div>;
   }
 
-  return <ClientPage instanceHash={instanceHash} pocketId={pocket.pocket_id} />;
+  return (
+    <ClientPage
+      instanceHash={instanceHash}
+      pocketId={pocket.pocket_id}
+      expiresAt={pocket.expires_at}
+    />
+  );
 }

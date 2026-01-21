@@ -1,4 +1,4 @@
-import { pool } from "../../lib/db";
+import { pool } from "@/app/api/lib/db";
 import type { Message } from "@/types/messageType";
 
 export async function GET(req: Request) {
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     WHERE instance_hash = $1
     ORDER BY created_at ASC
     `,
-    [instance_hash]
+    [instance_hash],
   );
 
   const preparedMessages: Message[] = [];

@@ -27,6 +27,11 @@ async function cleanup() {
     WHERE (status = 'reserved' AND expires_at < NOW())
        OR (status = 'active' AND expires_at < NOW())
   `);
+
+  await pool.query(`
+    DELETE FROM pocket_qr_codes
+    WHERE expires_at < NOW()
+  `);
 }
 
 setInterval(async () => {

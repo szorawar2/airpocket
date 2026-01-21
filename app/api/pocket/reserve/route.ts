@@ -1,4 +1,4 @@
-import { pool } from "../../lib/db";
+import { pool } from "@/app/api/lib/db";
 
 function generatePocketId() {
   const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A–Z
@@ -14,7 +14,7 @@ export async function POST() {
     try {
       await pool.query(
         `INSERT INTO pockets (pocket_id, expires_at) VALUES ($1, $2)`,
-        [pocketId, expiresAt]
+        [pocketId, expiresAt],
       );
 
       return Response.json({ pocketId });

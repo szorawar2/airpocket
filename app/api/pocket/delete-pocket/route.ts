@@ -1,4 +1,4 @@
-import { pool } from "../../lib/db";
+import { pool } from "@/app/api/lib/db";
 import bcrypt from "bcryptjs";
 import fs from "fs/promises";
 import path from "path";
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   // fetch stored hash
   const { rows } = await pool.query(
     `SELECT passcode_hash FROM pockets WHERE instance_hash = $1`,
-    [instanceHash]
+    [instanceHash],
   );
 
   if (rows.length === 0) {

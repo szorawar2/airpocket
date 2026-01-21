@@ -1,7 +1,7 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { pool } from "../../lib/db";
+import { pool } from "@/app/api/lib/db";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     FROM pockets
     WHERE pocket_id = $1
     `,
-    [pocketId]
+    [pocketId],
   );
 
   if (result.rowCount === 0) {
