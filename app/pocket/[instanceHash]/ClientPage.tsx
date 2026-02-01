@@ -54,15 +54,28 @@ export default function ClientPage({
   }, [expiresAt]);
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
+    <div
+      className="
+      relative overflow-hidden space-y-6
+      flex flex-col
+      max-w-[1420px] mx-auto
+      p-6 bg-background rounded-2xl mt-2 xl:mt-10
+      h-full md:h-[80vh] max-h-[1000px]
+      "
+    >
       <div className="">
-        <h1 className="text-xl font-semibold">Pocket {pocketId}</h1>
+        <h1 className="text-2xl font-semibold text-col4 ">Pocket {pocketId}</h1>
         <p className="font-mono text-sm">Expires in {timeLeft}</p>
       </div>
 
       {/* action buttons*/}
-      <div className="flex gap-2">
-        <button onClick={() => setShowDelete(true)}>Delete pocket</button>
+      <div className="flex font-[Open_Sans] divide-x-2 divide-col1">
+        <button
+          className="font-semibold underline decoration-1 underline-offset-2 cursor-pointer hover:text-col2 hover:underline pr-2 text-sm text-col4 md:text-base"
+          onClick={() => setShowDelete(true)}
+        >
+          Delete pocket
+        </button>
         {showDelete && (
           <DeletePopup
             passcode={passcode}
@@ -81,7 +94,12 @@ export default function ClientPage({
           />
         )}
 
-        <button onClick={() => setShowExtend(true)}>Extend pocket</button>
+        <button
+          className="font-semibold underline decoration-1 underline-offset-2 cursor-pointer hover:text-col2 hover:underline px-2 text-sm text-col4 md:text-base"
+          onClick={() => setShowExtend(true)}
+        >
+          Extend pocket
+        </button>
         {showExtend && (
           <ExtendPocketPopup
             instanceHash={instanceHash}
@@ -89,7 +107,12 @@ export default function ClientPage({
           />
         )}
 
-        <button onClick={() => setShowQr(true)}>Create QR</button>
+        <button
+          className="font-semibold underline decoration-1 underline-offset-2 cursor-pointer hover:text-col2 hover:underline pl-2 text-sm text-col4 md:text-base"
+          onClick={() => setShowQr(true)}
+        >
+          Create QR
+        </button>
         {showQr && (
           <QrPopup
             instanceHash={instanceHash}
@@ -98,11 +121,13 @@ export default function ClientPage({
         )}
       </div>
 
-      <MessageDisplay
-        instanceHash={instanceHash}
-        refreshKey={refreshKey}
-        setRefreshKey={setRefreshKey}
-      />
+      <div className="flex-1 min-h-0 max-h-[40vh] md:max-h-[80vh] overflow-y-auto py-6 pb-12 mb-22">
+        <MessageDisplay
+          instanceHash={instanceHash}
+          refreshKey={refreshKey}
+          setRefreshKey={setRefreshKey}
+        />
+      </div>
 
       <InputBar instanceHash={instanceHash} setRefreshKey={setRefreshKey} />
     </div>
@@ -123,27 +148,30 @@ function DeletePopup({
   onDelete: () => Promise<void>;
 }) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded space-y-4">
-        <h2 className="font-semibold">Delete pocket</h2>
+    <div className="fixed z-2 inset-0 bg-black/50 flex items-center justify-center ">
+      <div className="bg-white p-6 rounded space-y-4 rounded-xl w-80">
+        <h2 className="text-xl font-semibold pb-2 text-col4">Delete pocket</h2>
 
         <input
           maxLength={6}
           value={passcode}
           onChange={(e) => setPasscode(e.target.value)}
-          className="border px-3 py-2 w-full"
+          className="border px-3 py-2 w-full mb-6 rounded-lg outline-col2"
           placeholder="Enter passcode"
         />
 
-        <div className="flex gap-2">
-          <button onClick={onCancel} className="px-4 py-2 border">
+        <div className="flex gap-2 justify-center">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 border rounded-lg cursor-pointer hover:text-col2"
+          >
             Cancel
           </button>
 
           <button
             disabled={passcode.length !== 6 || loading}
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white"
+            className="px-4 py-2 bg-col3 text-white rounded-lg cursor-pointer hover:bg-col4"
           >
             Delete
           </button>
@@ -181,35 +209,42 @@ function ExtendPocketPopup({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded w-80">
-        <h2 className="font-semibold text-lg">Extend pocket</h2>
-        <p className="italic pb-4 ">max pocket duration is 3 days</p>
+    <div className="fixed z-2 inset-0 bg-black/50 flex items-center justify-center">
+      <div className="bg-white p-6 rounded rounded-xl w-80">
+        <h2 className="font-semibold text-lg text-col4">Extend pocket</h2>
+        <p className="italic pb-4 text-col3 font-[Open_sans]">
+          max pocket duration is 3 days
+        </p>
 
-        <select
-          value={expiresIn}
-          onChange={(e) => setExpiresIn(Number(e.target.value))}
-          className="w-full border px-3 p-2 mb-6 rounded"
-        >
-          <option value={15}>15 mins</option>
-          <option value={30}>30 mins</option>
-          <option value={60}>1 hour</option>
-          <option value={180}>3 hours</option>
-          <option value={360}>6 hours</option>
-          <option value={720}>12 hours</option>
-          <option value={1440}>1 day</option>
-          <option value={4320}>3 days</option>
-        </select>
+        <div className="font-[Raleway]">
+          <select
+            value={expiresIn}
+            onChange={(e) => setExpiresIn(Number(e.target.value))}
+            className="w-full border px-3 p-2 mb-6 rounded cursor-pointer "
+          >
+            <option value={15}>15 mins</option>
+            <option value={30}>30 mins</option>
+            <option value={60}>1 hour</option>
+            <option value={180}>3 hours</option>
+            <option value={360}>6 hours</option>
+            <option value={720}>12 hours</option>
+            <option value={1440}>1 day</option>
+            <option value={4320}>3 days</option>
+          </select>
+        </div>
 
         <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="px-4 py-2 border rounded">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border rounded-lg cursor-pointer hover:text-col2"
+          >
             Cancel
           </button>
 
           <button
             disabled={loading}
             onClick={extendPocket}
-            className="px-4 py-2 bg-black text-white rounded disabled:opacity-50"
+            className="px-4 py-2 bg-col3 text-white rounded disabled:opacity-50 rounded-lg cursor-pointer hover:bg-col4"
           >
             Extend
           </button>
@@ -227,7 +262,7 @@ function QrPopup({
   onClose: () => void;
 }) {
   const [qrUrl, setQrUrl] = useState<string | null>(null);
-  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<string | Number | null>(null);
   const [timeLeft, setTimeLeft] = useState("");
 
   // generate QR when popup appears (mount)
@@ -252,7 +287,8 @@ function QrPopup({
     if (!expiresAt) return;
 
     function update() {
-      const diff = new Date(expiresAt).getTime() - Date.now();
+      const time = new Date(expiresAt as string | number).getTime();
+      const diff = time - Date.now();
 
       if (diff <= 0) {
         setTimeLeft("Expired");
@@ -270,11 +306,11 @@ function QrPopup({
   }, [expiresAt]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded space-y-4 text-center w-80 flex flex-col items-center">
+    <div className="fixed z-2 inset-0 bg-black/50 flex items-center justify-center">
+      <div className="bg-white p-6 rounded space-y-4 text-center w-80 flex flex-col items-center rounded-lg">
         <div>
-          <h2 className="font-semibold">Pocket QR</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="font-semibold text-lg text-col4">Pocket QR</h2>
+          <p className="text-sm text-col2">
             {timeLeft ? `Expires in ${timeLeft}` : "Generating…"}
           </p>
         </div>
@@ -285,7 +321,10 @@ function QrPopup({
           <p className="text-sm text-gray-400">Generating…</p>
         )}
 
-        <button onClick={onClose} className="border px-4 py-2 mt-4 mx-auto">
+        <button
+          onClick={onClose}
+          className="border px-4 py-2 mt-4 mx-auto rounded-lg cursor-pointer hover:text-col2"
+        >
           Close
         </button>
       </div>

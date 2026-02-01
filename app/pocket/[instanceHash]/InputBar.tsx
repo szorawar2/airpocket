@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import CloseIcon from "@/components/misc/CloseIcon";
 
 type UploadFile = {
   file: File;
@@ -20,6 +21,8 @@ export default function InputBar({
   const [text, setText] = useState("");
   const [files, setFiles] = useState<UploadFile[]>([]);
   const formDataRef = useRef<FormData | null>(null);
+
+  const [showInputBar, setShowInputBar] = useState(false);
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const inputFiles = Array.from(e.target.files ?? []);
@@ -69,65 +72,125 @@ export default function InputBar({
       console.error("Upload failed");
       return;
     }
+
+    setText("");
+    setFiles([]);
+    setShowInputBar(false);
+
     setRefreshKey((key) => (key += 1));
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6 border-2 rounded-xl border-sky-500">
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        {/* text input */}
-        <input
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="w-full p-2 border rounded"
-          placeholder="Write a message"
-        />
+    <>
+      <div
+        className={`w-full flex space- justify-center gap-6 
+        absolute left-0 right-0 bottom-0
+        p-4
+        bg-background
+        border-t border-gray-200
+        transition-all duration-500 ease-out
+        transform
+        ${!showInputBar ? " opacity-100" : " opacity-0"}`}
+      >
+        <button
+          className="w-3/10 min-w-30 border-2 rounded-lg border-col2 text-col2 p-2 hover:bg-col2 hover:text-white cursor-pointer"
+          onClick={() => setShowInputBar(true)}
+        >
+          Add Note
+        </button>
+        <button
+          className="w-3/10 min-w-30 bg-col1 rounded-lg text-white hover:bg-col3 p-2 cursor-pointer"
+          onClick={() => setShowInputBar(true)}
+        >
+          Upload Files
+        </button>
+      </div>
 
-        {/* file input */}
-        <input type="file" multiple onChange={onFileChange} />
+      <div
+        className={`
+        absolute left-0 right-0 bottom-0
+        p-4
+        bg-background
+        border-t border-gray-200
+        transition-all duration-500 ease-out
+        transform
+        ${showInputBar ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}
+        `}
+      >
+        <button
+          className="border-2 border-col2 w-fit p-1 mb-4 rounded-lg text-white font-semibold cursor-pointer"
+          onClick={() => setShowInputBar(false)}
+        >
+          <CloseIcon className={"var(--color-col2)"}></CloseIcon>
+        </button>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          {/* text input */}
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="w-full p-2 border border-col2 rounded-lg font-[Open_sans] outline-col2 focus:outline focus:outline-2 focus:outline-col1"
+            placeholder="Write a Note..."
+          />
 
-        {/* preview */}
-        {files.length > 0 && (
-          <ul className="text-sm">
-            {files.map((thisFile, i) => (
-              <li className="flex space-4" key={i}>
-                <div
-                  className="cursor-pointer text-blue-600 hover:underline"
-                  onClick={() => {
-                    const url = URL.createObjectURL(thisFile.file);
-                    window.open(url);
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                  }}
-                >
-                  {thisFile.file.name}
-                </div>
-                <label className="flex items-center gap-1 text-gray-600">
-                  <input
-                    type="checkbox"
-                    checked={thisFile.burn}
-                    onChange={(e) => {
-                      const copy = [...files];
-                      copy[i] = { ...copy[i], burn: e.target.checked };
-                      setFiles(copy);
-                    }}
-                  />
-                  burn
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
+          {/* file input */}
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            onChange={onFileChange}
+            className="hidden"
+          />
 
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            className="rounded-lg bg-black px-6 py-3 text-white hover:bg-gray-800 transition"
+          <label
+            htmlFor="file-upload"
+            className=" cursor-pointer font-semibold rounded-xl pr-4 py-2 text-col4 max-w-40 underline"
           >
-            Upload
-          </button>
-        </div>
-      </form>
-    </div>
+            Select files
+          </label>
+
+          {/* preview */}
+          {files.length > 0 && (
+            <ul className="text-sm">
+              {files.map((thisFile, i) => (
+                <li className="flex space-4" key={i}>
+                  <div
+                    className="cursor-pointer text-blue-600 hover:underline"
+                    onClick={() => {
+                      const url = URL.createObjectURL(thisFile.file);
+                      window.open(url);
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    }}
+                  >
+                    {thisFile.file.name}
+                  </div>
+                  <label className="flex items-center gap-1 text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={thisFile.burn}
+                      onChange={(e) => {
+                        const copy = [...files];
+                        copy[i] = { ...copy[i], burn: e.target.checked };
+                        setFiles(copy);
+                      }}
+                    />
+                    burn
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              className="rounded-lg bg-col3 px-6 py-3 text-white hover:bg-col2 transition font-semibold cursor-pointer"
+            >
+              Upload
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }

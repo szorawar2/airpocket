@@ -37,7 +37,7 @@ export default function CreatePocket() {
       }),
     });
 
-    if (!res.ok) return; // optional error handling
+    if (!res.ok) return;
 
     const { instanceHash } = await res.json();
 
@@ -50,31 +50,37 @@ export default function CreatePocket() {
   }
 
   return (
-    <div className="mx-auto max-w-md p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Create Pocket</h1>
+    <div className="mx-auto w-120 max-w-9/10 max-h-150 p-6 space-y-6 bg-background rounded-2xl mt-10 p-12 ">
+      <h1 className="text-2xl font-bold text-col4 ">Create Pocket</h1>
 
-      <div className="rounded-lg border p-4">
-        <p className="text-sm text-gray-500">Pocket ID</p>
+      <div className="rounded-xl border border-col4 p-4">
+        <p className="text-sm text-col2 font-[Open_Sans]">Pocket ID</p>
         <p className="text-xl font-mono">{pocketId}</p>
       </div>
 
       <div>
-        <label className="block text-sm mb-1">6-digit passcode</label>
+        <label className="block text-sm mb-1 text-col2 font-[Open_Sans]">
+          6-digit passcode
+        </label>
         <input
-          // type="password"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           maxLength={6}
           value={passcode}
-          onChange={(e) => setPasscode(e.target.value)}
-          className="w-full rounded border px-3 py-2"
+          onChange={(e) => setPasscode(e.target.value.replace(/\D/g, ""))}
+          className="w-full rounded-xl border border-col4 px-3 py-2 focus:border-2 focus:outline-none focus:border-col2"
         />
       </div>
 
       <div>
-        <label className="block text-sm mb-1">Expiration</label>
+        <label className="block text-sm mb-1 text-col2 font-[Open_Sans]">
+          Expiration
+        </label>
         <select
           value={expiresIn}
           onChange={(e) => setExpiresIn(Number(e.target.value))}
-          className="w-full rounded border px-3 py-2"
+          className="w-full rounded-xl border px-3 py-2 cursor-pointer"
         >
           <option value={15}>15 mins</option>
           <option value={30}>30 mins</option>
@@ -90,7 +96,7 @@ export default function CreatePocket() {
       <button
         onClick={finalizePocket}
         disabled={passcode.length !== 6}
-        className="w-full rounded bg-black py-3 text-white disabled:opacity-50"
+        className="w-full rounded-xl bg-col3 py-3 text-white disabled:opacity-50 hover:bg-col4 disabled:hover:bg-col3 cursor-pointer"
       >
         Create Pocket
       </button>

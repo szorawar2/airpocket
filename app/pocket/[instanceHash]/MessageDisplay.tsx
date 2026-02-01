@@ -34,18 +34,19 @@ export default function MessageDisplay({
   if (loading) return <div>Loading…</div>;
 
   return (
-    <div className="border rounded p-4 space-y-2">
-      {content.length === 0 && (
-        <div className="text-gray-500">No messages yet</div>
-      )}
+    <div className=" bg-background2 rounded-xl p-4 pt-8 space-y-2 md:mx-12 ">
+      {content.length === 0 && <div className="text-col3">No notes yet</div>}
       {content.map((m, i) => (
-        <div key={m.batch_id}>
+        <div
+          key={m.batch_id}
+          className=" bg-background rounded-xl p-4 mb-6 md:mx-6"
+        >
           {/* prevent rendering of null batches */}
           {(m.text != null || m.files.length > 0) && (
             <>
               <div>
-                <div className="w-full border-b pb-2 flex justify-between items-center">
-                  <div>{m.text}</div>{" "}
+                <div className="w-full border-b border-col1 pb-1 mb-1 flex justify-between items-center">
+                  <div className="font-[Open_sans]">{m.text}</div>{" "}
                   <DropDown
                     instanceHash={instanceHash}
                     batch_id={m.batch_id}
@@ -62,10 +63,10 @@ export default function MessageDisplay({
                       file={file}
                     />
                   ))}
-                  {m.files.length > 0 && (
+                  {m.files.length > 1 && (
                     <a
                       href={`/api/pocket/download-batch?instance_hash=${instanceHash}&batch_id=${m.batch_id}`}
-                      className="text-blue-600 "
+                      className="bg-col0 p-1 px-4 rounded-lg text-col4 font-semibold mt-2 inline-block cursor-pointer"
                     >
                       Download all
                     </a>
@@ -95,7 +96,7 @@ function DownloadLink({
     <div className="flex space-4">
       <a
         href={`/api/pocket/download?instance_hash=${instanceHash}&file_id=${file.file_id}&batch_id=${m.batch_id}`}
-        className="text-blue-600 "
+        className="text-col2 underline pb-1 "
         onClick={() => setDeleted((d) => (d == false ? true : true))}
       >
         {file.original_file_name}

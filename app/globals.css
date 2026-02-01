@@ -2,14 +2,26 @@
 
 :root {
   --background: #ffffff;
+  --background2: #e0f2fa;
   --foreground: #171717;
+
+  --col0: #89dcfd;
+  --col1: #00a8e8;
+  --col2: #007ea7;
+  --col3: #003459;
+  --col4: #012835;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background2: var(--background2);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-rubik);
-  --font-geist: var(--font-geist);
+
+  --color-col0: var(--col0);
+  --color-col1: var(--col1);
+  --color-col2: var(--col2);
+  --color-col3: var(--col3);
+  --color-col4: var(--col4);
 }
 
 /* @media (prefers-color-scheme: dark) {
@@ -20,7 +32,9 @@
 } */
 
 body {
-  background: var(--background);
+  /* background: var(--background2); */
+  max-width: 100%;
+  /* max-height: 150vh; */
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: var(--font-raleway), system-ui, sans-serif;
 }
