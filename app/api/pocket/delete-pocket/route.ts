@@ -8,8 +8,8 @@ const baseDir = path.join(process.cwd(), "pocket_files");
 export async function POST(req: Request) {
   const { instanceHash, passcode } = await req.json();
 
-  if (!instanceHash || !passcode) {
-    return new Response("Missing fields", { status: 400 });
+  if (!instanceHash || !passcode || passcode.length !== 6) {
+    return Response.json({ error: "Missing fields" }, { status: 400 });
   }
 
   // fetch stored hash
@@ -19,19 +19,29 @@ export async function POST(req: Request) {
   );
 
   if (rows.length === 0) {
-    return new Response("Pocket not found", { status: 404 });
+    return Response.json(
+      { error: "Pocket not found or expired" },
+      { status: 400 },
+    );
   }
 
   const valid = await bcrypt.compare(passcode, rows[0].passcode_hash);
 
   if (!valid) {
-    return new Response("Invalid passcode", { status: 401 });
+    return Response.json({ error: "Invalid passcode" }, { status: 401 });
   }
 
   // Cascade delete
-  await pool.query(`DELETE FROM pockets WHERE instance_hash = $1`, [
-    instanceHash,
-  ]);
+  try {
+    await pool.query(`DELETE FROM pockets WHERE instance_hash = $1`, [
+      instanceHash,
+    ]);
+  } catch (error) {
+    return Response.json(
+      { error: "Something went wrong. Please try again" },
+      { status: 400 },
+    );
+  }
 
   // delete files from disk
   try {

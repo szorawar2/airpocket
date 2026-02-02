@@ -2,6 +2,7 @@ import { pool } from "@/app/api/lib/db";
 import { hashPasscode, generateInstanceHash } from "../../lib/hash";
 import fs from "fs/promises";
 import path from "path";
+import { stat } from "fs";
 
 const baseDir = path.join(process.cwd(), "pocket_files");
 
@@ -13,12 +14,6 @@ export async function POST(req: Request) {
   const expiresAt = new Date(Date.now() + expiresInMinutes * 60_000);
 
   const pocketDir = path.join(baseDir, instanceHash);
-
-  try {
-    await fs.mkdir(pocketDir, { recursive: true });
-  } catch (error: any) {
-    return Response.json(`Error creating directory: ${error.message}`);
-  }
 
   const res = await pool.query(
     `
@@ -36,8 +31,20 @@ export async function POST(req: Request) {
   );
 
   if (res.rowCount === 0) {
-    return Response.json({ error: "Invalid pocket" }, { status: 400 });
+    return Response.json(
+      { error: "Invalid session, Please reload page" },
+      { status: 400 },
+    );
   }
 
-  return Response.json({ instanceHash });
+  try {
+    await fs.mkdir(pocketDir, { recursive: true });
+  } catch (error: any) {
+    return Response.json(
+      { error: "Something went wrong. Please refresh and try again" },
+      { status: 400 },
+    );
+  }
+
+  return Response.json({ instanceHash }, { status: 200 });
 }

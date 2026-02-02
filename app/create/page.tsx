@@ -11,6 +11,8 @@ export default function CreatePocket() {
   const [expiresIn, setExpiresIn] = useState(30);
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     async function reservePocket() {
       const res = await fetch("/api/pocket/reserve", {
@@ -37,12 +39,14 @@ export default function CreatePocket() {
       }),
     });
 
-    if (!res.ok) return;
+    const data = await res.json();
 
-    const { instanceHash } = await res.json();
+    if (!res.ok) {
+      setError(data.error);
+      return;
+    }
 
-    // redirect to upload page for this pocket
-    router.push(`/pocket/${instanceHash}`);
+    router.push(`/pocket/${data.instanceHash}`);
   }
 
   if (loading) {
@@ -53,9 +57,12 @@ export default function CreatePocket() {
     <div className="mx-auto w-120 max-w-9/10 max-h-150 p-6 space-y-6 bg-background rounded-2xl mt-10 p-12 ">
       <h1 className="text-2xl font-bold text-col4 ">Create Pocket</h1>
 
-      <div className="rounded-xl border border-col4 p-4">
-        <p className="text-sm text-col2 font-[Open_Sans]">Pocket ID</p>
-        <p className="text-xl font-mono">{pocketId}</p>
+      <div>
+        {error && <p className="text-col4 font-mono pb-1">{error}</p>}
+        <div className="rounded-xl border border-col4 p-4">
+          <p className="text-sm text-col2 font-[Open_Sans]">Pocket ID</p>
+          <p className="text-xl font-mono">{pocketId}</p>
+        </div>
       </div>
 
       <div>

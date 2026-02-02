@@ -6,13 +6,13 @@ export default function MessageDisplay({
   instanceHash,
   refreshKey,
   setRefreshKey,
+  setGeneralError,
 }: {
   instanceHash: string;
   refreshKey: number;
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
+  setGeneralError: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
-  // const content: Message[] = await getPreparedMessages(instanceHash);
-
   const [content, setContent] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,6 +22,13 @@ export default function MessageDisplay({
       const res = await fetch(
         `/api/pocket/prepared-messages?instance_hash=${instanceHash}`,
       );
+
+      if (!res.ok) {
+        setGeneralError("Failed to load messages. Please try again.");
+        setLoading(false);
+        return;
+      }
+
       const data = await res.json();
 
       setContent(data);
@@ -34,8 +41,10 @@ export default function MessageDisplay({
   if (loading) return <div>Loading…</div>;
 
   return (
-    <div className=" bg-background2 rounded-xl p-4 pt-8 space-y-2 md:mx-12 ">
-      {content.length === 0 && <div className="text-col3">No notes yet</div>}
+    <div className=" bg-background2 rounded-xl p-4 pt-8 space-y-2 md:mx-12 flex flex-col ">
+      {content.length === 0 && (
+        <div className="text-col3 px-6">No notes yet</div>
+      )}
       {content.map((m, i) => (
         <div
           key={m.batch_id}

@@ -14,9 +14,11 @@ const MAX_SIZE = 1024 * 1024 * 1024; // 1GB
 export default function InputBar({
   instanceHash,
   setRefreshKey,
+  setGeneralError,
 }: {
   instanceHash: string;
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
+  setGeneralError: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
   const [text, setText] = useState("");
   const [files, setFiles] = useState<UploadFile[]>([]);
@@ -70,6 +72,7 @@ export default function InputBar({
 
     if (!res.ok) {
       console.error("Upload failed");
+      setGeneralError("Upload failed. Please try again.");
       return;
     }
 

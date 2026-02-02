@@ -14,10 +14,11 @@ export default function ClientPage({
   pocketId: string;
   expiresAt: string;
 }) {
+  const [generalError, setGeneralError] = useState<string | null>(null);
+
   //Delete Pocket
   const [showDelete, setShowDelete] = useState(false);
   const [passcode, setPasscode] = useState("");
-  const [loading, setLoading] = useState(false);
 
   //Extend Pocket
   const [showExtend, setShowExtend] = useState(false);
@@ -44,7 +45,7 @@ export default function ClientPage({
       const minutes = totalMinutes % 60;
 
       setTimeLeft(
-        `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
+        `${String(hours).padStart(2, "0")} hrs ${String(minutes).padStart(2, "0")} min`,
       );
     }
 
@@ -58,6 +59,7 @@ export default function ClientPage({
       className="
       relative overflow-hidden space-y-6
       flex flex-col
+      w-[100vw]
       max-w-[1420px] mx-auto
       p-6 bg-background rounded-2xl mt-2 xl:mt-10
       h-full md:h-[80vh] max-h-[1000px]
@@ -78,19 +80,10 @@ export default function ClientPage({
         </button>
         {showDelete && (
           <DeletePopup
+            instanceHash={instanceHash}
             passcode={passcode}
             setPasscode={setPasscode}
-            loading={loading}
-            onCancel={() => setShowDelete(false)}
-            onDelete={async () => {
-              setLoading(true);
-              await fetch("/api/pocket/delete-pocket", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ instanceHash, passcode }),
-              });
-              window.location.href = "/";
-            }}
+            setShowDelete={setShowDelete}
           />
         )}
 
@@ -121,48 +114,83 @@ export default function ClientPage({
         )}
       </div>
 
-      <div className="flex-1 min-h-0 max-h-[40vh] md:max-h-[80vh] overflow-y-auto py-6 pb-12 mb-22">
+      {generalError && (
+        <p className="p-4 text-col2 rounded-lg font-mono">{generalError}</p>
+      )}
+
+      <div className="flex-1  min-h-0 max-h-[40vh] md:max-h-[80vh] overflow-y-auto py-6 pb-12 mb-22">
         <MessageDisplay
           instanceHash={instanceHash}
           refreshKey={refreshKey}
           setRefreshKey={setRefreshKey}
+          setGeneralError={setGeneralError}
         />
       </div>
 
-      <InputBar instanceHash={instanceHash} setRefreshKey={setRefreshKey} />
+      <InputBar
+        instanceHash={instanceHash}
+        setRefreshKey={setRefreshKey}
+        setGeneralError={setGeneralError}
+      />
     </div>
   );
 }
 
 function DeletePopup({
+  instanceHash,
   passcode,
   setPasscode,
-  loading,
-  onCancel,
-  onDelete,
+  setShowDelete,
 }: {
+  instanceHash: string;
   passcode: string;
   setPasscode: (v: string) => void;
-  loading: boolean;
-  onCancel: () => void;
-  onDelete: () => Promise<void>;
+  setShowDelete: (v: boolean) => void;
 }) {
+  const [loading, setLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function deletePocket() {
+    setLoading(true);
+
+    const res = await fetch("/api/pocket/delete-pocket", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ instanceHash, passcode }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setDeleteError(data.error || "Failed to delete pocket");
+      setLoading(false);
+      return;
+    }
+
+    window.location.href = "/";
+  }
+
   return (
     <div className="fixed z-2 inset-0 bg-black/50 flex items-center justify-center ">
       <div className="bg-white p-6 rounded space-y-4 rounded-xl w-80">
         <h2 className="text-xl font-semibold pb-2 text-col4">Delete pocket</h2>
 
-        <input
-          maxLength={6}
-          value={passcode}
-          onChange={(e) => setPasscode(e.target.value)}
-          className="border px-3 py-2 w-full mb-6 rounded-lg outline-col2"
-          placeholder="Enter passcode"
-        />
+        <div>
+          {deleteError && (
+            <p className="text-col4 font-mono pb-1">{deleteError}</p>
+          )}
+          <input
+            maxLength={6}
+            value={passcode}
+            onChange={(e) => setPasscode(e.target.value.replace(/\D/g, ""))}
+            className="border px-3 py-2 w-full mb-6 rounded-lg outline-col2"
+            placeholder="Enter passcode"
+          />
+        </div>
 
         <div className="flex gap-2 justify-center">
           <button
-            onClick={onCancel}
+            onClick={() => setShowDelete(false)}
             className="px-4 py-2 border rounded-lg cursor-pointer hover:text-col2"
           >
             Cancel
@@ -170,8 +198,8 @@ function DeletePopup({
 
           <button
             disabled={passcode.length !== 6 || loading}
-            onClick={onDelete}
-            className="px-4 py-2 bg-col3 text-white rounded-lg cursor-pointer hover:bg-col4"
+            onClick={deletePocket}
+            className="px-4 py-2 bg-col3 text-white rounded-lg cursor-pointer hover:bg-col4  disabled:opacity-50"
           >
             Delete
           </button>
@@ -216,11 +244,11 @@ function ExtendPocketPopup({
           max pocket duration is 3 days
         </p>
 
-        <div className="font-[Raleway]">
+        <div>
           <select
             value={expiresIn}
             onChange={(e) => setExpiresIn(Number(e.target.value))}
-            className="w-full border px-3 p-2 mb-6 rounded cursor-pointer "
+            className="w-full border px-3 p-2 mb-6 rounded cursor-pointer font-[Raleway] "
           >
             <option value={15}>15 mins</option>
             <option value={30}>30 mins</option>

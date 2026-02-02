@@ -9,7 +9,6 @@ export default function EnterPocket() {
   const alphaRef = useRef<HTMLInputElement | null>(null);
   const numsRef = useRef<HTMLInputElement | null>(null);
 
-  // const [pocketId, setPocketId] = useState("");
   const [passcode, setPasscode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,12 +69,6 @@ export default function EnterPocket() {
         <label className="block text-sm mb-1 text-col2 font-[Open_Sans]">
           Pocket ID
         </label>
-        {/* <input
-          value={pocketId}
-          onChange={(e) => setPocketId(e.target.value.toUpperCase())}
-          placeholder="A-0421"
-          className="w-full rounded-xl border border-col4 px-3 py-2 focus:border-2 focus:outline-none focus:border-col2"
-        /> */}
         <div className="flex items-center gap-2">
           {/* letter */}
           <input
@@ -122,7 +115,7 @@ export default function EnterPocket() {
         />
       </div>
 
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      {error && <div className="text-col2 font-mono">{error}</div>}
 
       <button
         onClick={enterPocket}
