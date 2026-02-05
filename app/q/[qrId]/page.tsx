@@ -1,12 +1,10 @@
 import { redirect, notFound } from "next/navigation";
 import { pool } from "@/app/api/lib/db";
 
-export default async function QrRedirectPage({
-  params,
-}: {
-  params: { qrId: string };
-}) {
-  const { qrId } = await params;
+type tParams = Promise<{ qrId: string }>;
+
+export default async function QrRedirectPage(props: { params: tParams }) {
+  const { qrId } = await props.params;
 
   const { rows } = await pool.query(
     `

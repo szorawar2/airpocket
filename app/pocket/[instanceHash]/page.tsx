@@ -1,13 +1,12 @@
+import { use } from "react";
 import { notFound } from "next/navigation";
 import { getPocket } from "@/app/api/lib/pocket";
 import ClientPage from "./ClientPage";
 
-export default async function PocketPage({
-  params,
-}: {
-  params: { instanceHash: string } | Promise<{ instanceHash: string }>;
-}) {
-  const { instanceHash } = await params;
+type tParams = Promise<{ instanceHash: string }>;
+
+export default async function PocketPage(props: { params: tParams }) {
+  const { instanceHash } = await props.params;
 
   const pocket = await getPocket(instanceHash);
   if (!pocket) notFound();

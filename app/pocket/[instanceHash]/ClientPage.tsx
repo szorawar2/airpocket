@@ -219,10 +219,12 @@ function ExtendPocketPopup({
   const [expiresIn, setExpiresIn] = useState<number>(30);
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   async function extendPocket() {
     setLoading(true);
 
-    await fetch("/api/pocket/extend", {
+    const res = await fetch("/api/pocket/extend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -230,6 +232,14 @@ function ExtendPocketPopup({
         expiresIn: expiresIn,
       }),
     });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Failed to extend pocket");
+      setLoading(false);
+      return;
+    }
 
     setLoading(false);
     onClose();
@@ -245,6 +255,7 @@ function ExtendPocketPopup({
         </p>
 
         <div>
+          {error && <p className="text-col4 font-mono pb-1">{error}</p>}
           <select
             value={expiresIn}
             onChange={(e) => setExpiresIn(Number(e.target.value))}

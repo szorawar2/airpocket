@@ -1,4 +1,4 @@
-import { pool } from "../app/api/lib/db.node.ts";
+import { pool } from "../app/api/lib/db.node";
 import fs from "fs/promises";
 import path from "path";
 
