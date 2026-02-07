@@ -15,15 +15,12 @@ services:
     restart: unless-stopped
 
   cleanup:
-    image: node:20
+    build: ./cleanup_server
     container_name: airpocket-cleanup
-    working_dir: /app
-    volumes:
-      - .:/app
-      - pocket_files:/app/pocket_files
     env_file:
       - .env
-    command: node cleanup_server/index.js
+    volumes:
+      - pocket_files:/app/pocket_files
     depends_on:
       - postgres
     restart: unless-stopped
