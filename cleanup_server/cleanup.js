@@ -1,4 +1,4 @@
-import { pool } from "../app/api/lib/db.node";
+import { pool } from "./db.node.js";
 import fs from "fs/promises";
 import path from "path";
 
@@ -16,7 +16,7 @@ async function cleanup() {
     const pocketDir = path.join(baseDir, pocket.instance_hash);
     try {
       await fs.rm(pocketDir, { recursive: true, force: true });
-    } catch (error: any) {
+    } catch (error) {
       console.error(error.message);
     }
   }

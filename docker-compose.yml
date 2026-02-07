@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  airpocket:
+    build: .
+    container_name: airpocket
+    ports:
+      - "3002:3000"
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    volumes:
+      - pocket_files:/app/pocket_files
+    restart: unless-stopped
+
+  cleanup:
+    image: node:20
+    container_name: airpocket-cleanup
+    working_dir: /app
+    volumes:
+      - .:/app
+      - pocket_files:/app/pocket_files
+    env_file:
+      - .env
+    command: node cleanup_server/index.js
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:18
+    container_name: airpocket-postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5431:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+volumes:
+  pocket_files:
+  postgres_data:
