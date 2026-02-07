@@ -2,9 +2,9 @@ FROM node:20
 
 WORKDIR /app
 
-COPY cleanup_server/package*.json ./
+COPY ./package*.json ./
 RUN npm install
 
-COPY cleanup_server .
+COPY . .
 
 CMD ["node", "index.js"]
