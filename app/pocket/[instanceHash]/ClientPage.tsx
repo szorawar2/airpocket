@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import MessageDisplay from "./MessageDisplay";
 import InputBar from "./InputBar";
+import PasscodePrompt from "./PasscodePrompt";
+import { useAuth } from "@/context/PocketContext";
+import { hashPasscode } from "@/app/api/lib/hash";
 
 export default function ClientPage({
   instanceHash,
@@ -14,11 +17,40 @@ export default function ClientPage({
   pocketId: string;
   expiresAt: string;
 }) {
+  const { contextPasscode, setContextPasscode } = useAuth();
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!contextPasscode || typeof contextPasscode != "string") return;
+
+    async function verify() {
+      const hash = await hashPasscode(contextPasscode as string);
+
+      const res = await fetch("/api/pocket/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instanceHash,
+          passcodeHash: hash,
+        }),
+      });
+
+      if (!res.ok) {
+        setGeneralError("Invalid passcode");
+        setContextPasscode(null);
+
+        return (
+          <PasscodePrompt instanceHash={instanceHash} pocketId={pocketId} />
+        );
+      }
+    }
+
+    verify();
+  }, [contextPasscode]);
 
   //Delete Pocket
   const [showDelete, setShowDelete] = useState(false);
-  const [passcode, setPasscode] = useState("");
+  const [deletePasscode, setDeletePasscode] = useState("");
 
   //Extend Pocket
   const [showExtend, setShowExtend] = useState(false);
@@ -81,8 +113,8 @@ export default function ClientPage({
         {showDelete && (
           <DeletePopup
             instanceHash={instanceHash}
-            passcode={passcode}
-            setPasscode={setPasscode}
+            deletePasscode={deletePasscode}
+            setDeletePasscode={setDeletePasscode}
             setShowDelete={setShowDelete}
           />
         )}
@@ -138,13 +170,13 @@ export default function ClientPage({
 
 function DeletePopup({
   instanceHash,
-  passcode,
-  setPasscode,
+  deletePasscode,
+  setDeletePasscode,
   setShowDelete,
 }: {
   instanceHash: string;
-  passcode: string;
-  setPasscode: (v: string) => void;
+  deletePasscode: string;
+  setDeletePasscode: (v: string) => void;
   setShowDelete: (v: boolean) => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -156,7 +188,7 @@ function DeletePopup({
     const res = await fetch("/api/pocket/delete-pocket", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instanceHash, passcode }),
+      body: JSON.stringify({ instanceHash, deletePasscode }),
     });
 
     const data = await res.json();
@@ -181,10 +213,12 @@ function DeletePopup({
           )}
           <input
             maxLength={6}
-            value={passcode}
-            onChange={(e) => setPasscode(e.target.value.replace(/\D/g, ""))}
+            value={deletePasscode}
+            onChange={(e) =>
+              setDeletePasscode(e.target.value.replace(/\D/g, ""))
+            }
             className="border px-3 py-2 w-full mb-6 rounded-lg outline-col2"
-            placeholder="Enter passcode"
+            placeholder="Enter deletePasscode"
           />
         </div>
 
@@ -197,7 +231,7 @@ function DeletePopup({
           </button>
 
           <button
-            disabled={passcode.length !== 6 || loading}
+            disabled={deletePasscode.length !== 6 || loading}
             onClick={deletePocket}
             className="px-4 py-2 bg-col3 text-white rounded-lg cursor-pointer hover:bg-col4  disabled:opacity-50"
           >
