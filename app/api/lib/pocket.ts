@@ -4,7 +4,7 @@ import { pool } from "./db";
 export async function getPocket(instanceHash: string) {
   const res = await pool.query(
     `SELECT * FROM pockets WHERE instance_hash = $1`,
-    [instanceHash]
+    [instanceHash],
   );
   return res.rows[0] ?? null;
 }
@@ -60,7 +60,7 @@ export async function getPocket(instanceHash: string) {
 export async function validatePocket(instanceHash: string) {
   const res = await pool.query(
     "SELECT * FROM pockets WHERE instance_hash = $1",
-    [instanceHash]
+    [instanceHash],
   );
 
   if (res.rows.length === 0) {

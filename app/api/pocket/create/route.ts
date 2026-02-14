@@ -1,5 +1,6 @@
 import { pool } from "@/app/api/lib/db";
-import { hashPasscode, generateInstanceHash } from "../../lib/hash";
+import { generateInstanceHash } from "../../lib/hash";
+import { hashPasscodeAgain } from "../../lib/hashServer";
 import fs from "fs/promises";
 import path from "path";
 import { stat } from "fs";
@@ -7,10 +8,10 @@ import { stat } from "fs";
 const baseDir = path.join(process.cwd(), "pocket_files");
 
 export async function POST(req: Request) {
-  const { pocketId, passcode, expiresInMinutes } = await req.json();
+  const { pocketId, passcodeHash, expiresInMinutes } = await req.json();
 
   const instanceHash = generateInstanceHash();
-  const passcodeHash = await hashPasscode(passcode);
+  const hashedAgain = await hashPasscodeAgain(passcodeHash);
   const expiresAt = new Date(Date.now() + expiresInMinutes * 60_000);
 
   const pocketDir = path.join(baseDir, instanceHash);
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       AND status = 'reserved'
     RETURNING pocket_id
     `,
-    [instanceHash, passcodeHash, expiresAt, pocketId],
+    [instanceHash, hashedAgain, expiresAt, pocketId],
   );
 
   if (res.rowCount === 0) {

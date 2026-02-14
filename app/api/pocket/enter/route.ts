@@ -5,9 +5,9 @@ import { pool } from "@/app/api/lib/db";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
-  const { pocketId, passcode } = await req.json();
+  const { pocketId, passcodeHash } = await req.json();
 
-  if (!pocketId || !passcode) {
+  if (!pocketId || !passcodeHash) {
     return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
   }
 
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   );
 
   if (result.rowCount === 0) {
-    return NextResponse.json({ error: "Invalid pocket" }, { status: 401 });
+    return NextResponse.json({ error: "Invalid pocket" }, { status: 404 });
   }
 
   const pocket = result.rows[0];
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   }
 
   // passcode check
-  const ok = await bcrypt.compare(passcode, pocket.passcode_hash);
+  const ok = await bcrypt.compare(passcodeHash, pocket.passcode_hash);
   if (!ok) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
