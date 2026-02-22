@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XFpbKJQr2o8nSM5PfDq3NKtHRc3EnU2EN38ltPrD3UlLnMB7vixmdORSuixgsiQ
+\restrict 0dSrnJWg25jTrvVKWhjOPqMx6PezSNpMx0SLLSBqf7j0oeeLvZiC3YI0AGEfynQ
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -20,7 +20,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: next_batch_id(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: next_batch_id(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.next_batch_id() RETURNS trigger
@@ -39,8 +39,10 @@ END;
 $$;
 
 
+ALTER FUNCTION public.next_batch_id() OWNER TO postgres;
+
 --
--- Name: next_file_id(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: next_file_id(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.next_file_id() RETURNS trigger
@@ -60,8 +62,10 @@ END;
 $$;
 
 
+ALTER FUNCTION public.next_file_id() OWNER TO postgres;
+
 --
--- Name: set_generated_filename(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: set_generated_filename(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.set_generated_filename() RETURNS trigger
@@ -85,8 +89,10 @@ END;
 $$;
 
 
+ALTER FUNCTION public.set_generated_filename() OWNER TO postgres;
+
 --
--- Name: set_ids_and_filename(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: set_ids_and_filename(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.set_ids_and_filename() RETURNS trigger
@@ -125,8 +131,10 @@ END;
 $$;
 
 
+ALTER FUNCTION public.set_ids_and_filename() OWNER TO postgres;
+
 --
--- Name: set_qr_expiry(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: set_qr_expiry(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.set_qr_expiry() RETURNS trigger
@@ -139,29 +147,35 @@ END;
 $$;
 
 
+ALTER FUNCTION public.set_qr_expiry() OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: pocket_items; Type: TABLE; Schema: public; Owner: -
+-- Name: pocket_items; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.pocket_items (
     id integer NOT NULL,
     instance_hash uuid NOT NULL,
-    text text,
     file_name text NOT NULL,
     created_at timestamp without time zone DEFAULT now(),
     burn boolean DEFAULT false NOT NULL,
     batch_id integer NOT NULL,
     file_id integer NOT NULL,
-    original_file_name text
+    original_file_name text,
+    ciphertext bytea,
+    iv bytea,
+    text text
 );
 
 
+ALTER TABLE public.pocket_items OWNER TO postgres;
+
 --
--- Name: pocket_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: pocket_items_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
 CREATE SEQUENCE public.pocket_items_id_seq
@@ -173,15 +187,17 @@ CREATE SEQUENCE public.pocket_items_id_seq
     CACHE 1;
 
 
+ALTER SEQUENCE public.pocket_items_id_seq OWNER TO postgres;
+
 --
--- Name: pocket_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: pocket_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
 ALTER SEQUENCE public.pocket_items_id_seq OWNED BY public.pocket_items.id;
 
 
 --
--- Name: pocket_qr_codes; Type: TABLE; Schema: public; Owner: -
+-- Name: pocket_qr_codes; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.pocket_qr_codes (
@@ -193,8 +209,10 @@ CREATE TABLE public.pocket_qr_codes (
 );
 
 
+ALTER TABLE public.pocket_qr_codes OWNER TO postgres;
+
 --
--- Name: pocket_qr_codes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: pocket_qr_codes_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
 CREATE SEQUENCE public.pocket_qr_codes_id_seq
@@ -206,15 +224,17 @@ CREATE SEQUENCE public.pocket_qr_codes_id_seq
     CACHE 1;
 
 
+ALTER SEQUENCE public.pocket_qr_codes_id_seq OWNER TO postgres;
+
 --
--- Name: pocket_qr_codes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: pocket_qr_codes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
 ALTER SEQUENCE public.pocket_qr_codes_id_seq OWNED BY public.pocket_qr_codes.id;
 
 
 --
--- Name: pockets; Type: TABLE; Schema: public; Owner: -
+-- Name: pockets; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.pockets (
@@ -224,12 +244,15 @@ CREATE TABLE public.pockets (
     passcode_hash text DEFAULT ''::text NOT NULL,
     expires_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
-    status character varying(10) DEFAULT 'reserved'::character varying NOT NULL
+    status character varying(10) DEFAULT 'reserved'::character varying NOT NULL,
+    salt bytea
 );
 
 
+ALTER TABLE public.pockets OWNER TO postgres;
+
 --
--- Name: pockets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: pockets_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
 CREATE SEQUENCE public.pockets_id_seq
@@ -241,36 +264,38 @@ CREATE SEQUENCE public.pockets_id_seq
     CACHE 1;
 
 
+ALTER SEQUENCE public.pockets_id_seq OWNER TO postgres;
+
 --
--- Name: pockets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: pockets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
 ALTER SEQUENCE public.pockets_id_seq OWNED BY public.pockets.id;
 
 
 --
--- Name: pocket_items id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: pocket_items id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pocket_items ALTER COLUMN id SET DEFAULT nextval('public.pocket_items_id_seq'::regclass);
 
 
 --
--- Name: pocket_qr_codes id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: pocket_qr_codes id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pocket_qr_codes ALTER COLUMN id SET DEFAULT nextval('public.pocket_qr_codes_id_seq'::regclass);
 
 
 --
--- Name: pockets id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: pockets id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pockets ALTER COLUMN id SET DEFAULT nextval('public.pockets_id_seq'::regclass);
 
 
 --
--- Name: pocket_items pocket_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: pocket_items pocket_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pocket_items
@@ -278,7 +303,7 @@ ALTER TABLE ONLY public.pocket_items
 
 
 --
--- Name: pocket_qr_codes pocket_qr_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: pocket_qr_codes pocket_qr_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pocket_qr_codes
@@ -286,7 +311,7 @@ ALTER TABLE ONLY public.pocket_qr_codes
 
 
 --
--- Name: pocket_qr_codes pocket_qr_codes_qr_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: pocket_qr_codes pocket_qr_codes_qr_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pocket_qr_codes
@@ -294,7 +319,7 @@ ALTER TABLE ONLY public.pocket_qr_codes
 
 
 --
--- Name: pockets pockets_instance_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: pockets pockets_instance_hash_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pockets
@@ -302,7 +327,7 @@ ALTER TABLE ONLY public.pockets
 
 
 --
--- Name: pockets pockets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: pockets pockets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pockets
@@ -310,7 +335,7 @@ ALTER TABLE ONLY public.pockets
 
 
 --
--- Name: pockets pockets_pocket_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: pockets pockets_pocket_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pockets
@@ -318,21 +343,21 @@ ALTER TABLE ONLY public.pockets
 
 
 --
--- Name: pocket_qr_codes qr_expiry_trigger; Type: TRIGGER; Schema: public; Owner: -
+-- Name: pocket_qr_codes qr_expiry_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
 CREATE TRIGGER qr_expiry_trigger BEFORE INSERT ON public.pocket_qr_codes FOR EACH ROW EXECUTE FUNCTION public.set_qr_expiry();
 
 
 --
--- Name: pocket_items trg_set_ids_and_filename; Type: TRIGGER; Schema: public; Owner: -
+-- Name: pocket_items trg_set_ids_and_filename; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
 CREATE TRIGGER trg_set_ids_and_filename BEFORE INSERT ON public.pocket_items FOR EACH ROW EXECUTE FUNCTION public.set_ids_and_filename();
 
 
 --
--- Name: pocket_items pocket_items_instance_hash_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: pocket_items pocket_items_instance_hash_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pocket_items
@@ -340,7 +365,7 @@ ALTER TABLE ONLY public.pocket_items
 
 
 --
--- Name: pocket_qr_codes pocket_qr_codes_instance_hash_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: pocket_qr_codes pocket_qr_codes_instance_hash_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.pocket_qr_codes
@@ -351,5 +376,5 @@ ALTER TABLE ONLY public.pocket_qr_codes
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XFpbKJQr2o8nSM5PfDq3NKtHRc3EnU2EN38ltPrD3UlLnMB7vixmdORSuixgsiQ
+\unrestrict 0dSrnJWg25jTrvVKWhjOPqMx6PezSNpMx0SLLSBqf7j0oeeLvZiC3YI0AGEfynQ
 
