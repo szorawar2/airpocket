@@ -16,7 +16,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [encryptionKey, setEncryptionKey] = useState<CryptoKey | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("passcode");
+    const stored = sessionStorage.getItem("ap_passcode");
     if (stored) {
       setContextPasscode(stored);
     }
