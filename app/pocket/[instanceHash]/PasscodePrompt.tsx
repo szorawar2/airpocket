@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/PocketContext";
 import { hashPasscode } from "@/app/api/lib/hash";
+import { useRouter } from "next/navigation";
 
 export default function PasscodePrompt({
   instanceHash,
@@ -12,6 +13,7 @@ export default function PasscodePrompt({
   pocketId: string;
 }) {
   const { setContextPasscode } = useAuth();
+  const router = useRouter();
 
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function PasscodePrompt({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         instanceHash,
-        passcodeHash,
+        passcodeHash: passcodeHash,
       }),
     });
 
@@ -42,7 +44,7 @@ export default function PasscodePrompt({
 
     setContextPasscode(passcode);
 
-    window.location.reload();
+    router.push(`/pocket/${instanceHash}`);
   }
 
   return (

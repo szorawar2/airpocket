@@ -10,3 +10,10 @@ export type Message = {
   text: string | null;
   files: FileItem[];
 };
+
+export type MessageDTO = {
+  batch_id: number;
+  ciphertext: string | null;
+  iv: string | null;
+  files: FileItem[];
+};

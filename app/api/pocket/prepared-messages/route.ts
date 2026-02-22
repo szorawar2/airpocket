@@ -1,5 +1,6 @@
 import { pool } from "@/app/api/lib/db";
-import type { Message } from "@/types/messageType";
+import type { MessageDTO } from "@/types/messageType";
+import { toBase64 } from "../../lib/hash";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
     [instance_hash],
   );
 
-  const preparedMessages: Message[] = [];
+  const preparedMessages: MessageDTO[] = [];
 
   for (const row of result.rows) {
     // try to find existing message with same batch_id
@@ -25,15 +26,20 @@ export async function GET(req: Request) {
     if (!message) {
       message = {
         batch_id: row.batch_id,
-        text: null,
+        ciphertext: null,
+        iv: null,
         files: [],
       };
       preparedMessages.push(message);
     }
 
-    // add text if present
-    if (row.text) {
-      message.text = row.text;
+    // add ciphertext and iv if present
+    if (row.ciphertext) {
+      const ciphertextBase64 = await toBase64(row.ciphertext);
+      const ivBase64 = await toBase64(row.iv);
+
+      message.ciphertext = ciphertextBase64;
+      message.iv = ivBase64;
     }
 
     // add file if present

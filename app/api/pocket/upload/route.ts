@@ -6,15 +6,17 @@ import path from "path";
 const baseDir = path.join(process.cwd(), "pocket_files");
 
 const MAX_FILES = 15;
-const MAX_SIZE = 1024 * 1024 * 1024; // 1GB
+const MAX_SIZE = 100 * 1024 * 1024; // 100MB
 
 export async function POST(req: Request) {
   const formData = await req.formData();
-  var text = formData.get("text");
+  // var text = formData.get("text");
+  const ciphertext = formData.get("ciphertext");
+  const iv = formData.get("iv");
   const files = formData
     .getAll("files")
     .filter((f): f is File => f instanceof File);
-  const burns = formData.getAll("burn");
+  const burns = formData.getAll("burns");
   const instance_hash = formData.get("instanceHash") as string;
 
   //Check max files
@@ -44,13 +46,22 @@ export async function POST(req: Request) {
 
   var result = null;
 
-  const textValue =
-    typeof text === "string" && text.trim().length > 0 ? text : null;
+  let cipherTextValue: Buffer | null = null;
+
+  if (typeof ciphertext === "string" && ciphertext.length > 0) {
+    cipherTextValue = Buffer.from(ciphertext, "base64");
+  }
+
+  let ivValue: Buffer | null = null;
+
+  if (typeof iv === "string" && iv.length > 0) {
+    ivValue = Buffer.from(iv, "base64");
+  }
 
   try {
     result = await pool.query(
-      `INSERT INTO pocket_items (instance_hash, text) VALUES ($1, $2) RETURNING *`,
-      [instance_hash, textValue],
+      `INSERT INTO pocket_items (instance_hash, ciphertext, iv) VALUES ($1, $2, $3) RETURNING *`,
+      [instance_hash, cipherTextValue, ivValue],
     );
   } catch (error: any) {
     return Response.json({ error: "Database Error, Please upload again" });
