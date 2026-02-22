@@ -17,6 +17,14 @@ export async function GET(req: Request) {
     return new NextResponse("Missing required params", { status: 400 });
   }
 
+  if (
+    typeof instance_hash !== "string" ||
+    typeof batch_id !== "string" ||
+    typeof file_id !== "string"
+  ) {
+    return new NextResponse("Invalid params", { status: 400 });
+  }
+
   // Fetch file info from DB
 
   const pocketStatus = await pool.query(
@@ -31,7 +39,7 @@ export async function GET(req: Request) {
   }
 
   const result = await pool.query(
-    `SELECT file_name, original_file_name, burn
+    `SELECT file_name, original_file_name, burn, iv
      FROM pocket_items
      WHERE instance_hash = $1 AND batch_id = $2 AND file_id = $3`,
     [instance_hash, batch_id, file_id],
@@ -76,7 +84,7 @@ export async function GET(req: Request) {
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${file.original_file_name}"`,
+      "x-iv": Buffer.from(file.iv).toString("base64"),
     },
   });
 }

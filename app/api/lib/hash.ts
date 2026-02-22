@@ -105,3 +105,22 @@ export async function encryptFile(file: File, key: CryptoKey) {
     iv: iv,
   };
 }
+
+export async function decryptFile(
+  encryptedBuffer: ArrayBuffer,
+  key: CryptoKey,
+  ivBase64: string,
+) {
+  const iv = await fromBase64(ivBase64);
+
+  const decryptedBuffer = await window.crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv,
+    },
+    key,
+    encryptedBuffer,
+  );
+
+  return new Blob([decryptedBuffer]);
+}

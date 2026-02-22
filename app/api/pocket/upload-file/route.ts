@@ -19,17 +19,15 @@ export async function POST(req: Request) {
     const batch_id = req.headers.get("x-batch-id") as string;
     const ivHeader = req.headers.get("x-iv"); // base64
 
-    console.log(chunkIndex);
-
     if (!instance_hash) {
       return Response.json({ error: "Invalid instance" }, { status: 400 });
     }
 
-    // try {
-    //   validatePocket(instance_hash);
-    // } catch (error) {
-    //   return Response.json({ error: "Pocket does not exist" }, { status: 400 });
-    // }
+    try {
+      validatePocket(instance_hash);
+    } catch (error) {
+      return Response.json({ error: "Pocket does not exist" }, { status: 400 });
+    }
 
     const chunkBuffer = Buffer.from(await req.arrayBuffer());
 
@@ -72,16 +70,16 @@ export async function POST(req: Request) {
 
       await fs.writeFile(path.join(pocketDir, generatedFileName), chunkBuffer);
 
-      // LAST CHUNK
-      const isLastChunk = chunkIndex === totalChunks - 1;
-      if (isLastChunk) {
-        console.log("File fully uploaded:", fileName);
+      // // LAST CHUNK
+      // const isLastChunk = chunkIndex === totalChunks - 1;
+      // if (isLastChunk) {
+      //   console.log("File fully uploaded:", fileName);
 
-        return Response.json({
-          ok: true,
-          message: "file uploaded",
-        });
-      }
+      //   return Response.json({
+      //     ok: true,
+      //     message: "file uploaded",
+      //   });
+      // }
 
       return Response.json({
         ok: true,
@@ -89,26 +87,48 @@ export async function POST(req: Request) {
       });
     }
 
-    // OTHER CHUNKS
-    if (generatedFileName === null) {
-      return Response.json({ error: "Missing file name" }, { status: 400 });
+    try {
+      // OTHER CHUNKS
+      if (generatedFileName === null) {
+        throw new Error("Missing file name");
+      }
+
+      await fs.appendFile(path.join(pocketDir, generatedFileName), chunkBuffer);
+
+      return Response.json({ ok: true, generatedFileName: generatedFileName });
+    } catch (err) {
+      console.error("Chunk upload failed:", err);
+
+      if (generatedFileName) {
+        const filePath = path.join(pocketDir, generatedFileName);
+
+        try {
+          await fs.unlink(filePath);
+        } catch (_) {}
+
+        await pool.query(
+          `DELETE FROM pocket_items WHERE instance_hash = $1 AND batch_id = $2 AND file_name = $3`,
+          [instance_hash, batch_id, generatedFileName],
+        );
+      }
+
+      return Response.json(
+        { error: "Upload failed. File rolled back." },
+        { status: 500 },
+      );
     }
 
-    await fs.appendFile(path.join(pocketDir, generatedFileName), chunkBuffer);
+    // //LAST CHUNK
+    // const isLastChunk = chunkIndex === totalChunks - 1;
 
-    //LAST CHUNK
-    const isLastChunk = chunkIndex === totalChunks - 1;
+    // if (isLastChunk) {
+    //   console.log("File fully uploaded:", fileName);
 
-    if (isLastChunk) {
-      console.log("File fully uploaded:", fileName);
-
-      return Response.json({
-        ok: true,
-        message: "file uploaded",
-      });
-    }
-
-    return Response.json({ ok: true });
+    //   return Response.json({
+    //     ok: true,
+    //     message: "file uploaded",
+    //   });
+    // }
   } catch (error) {
     return Response.json({ error: "Upload failed" }, { status: 500 });
   }

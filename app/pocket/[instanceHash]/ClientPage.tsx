@@ -199,10 +199,12 @@ function DeletePopup({
   async function deletePocket() {
     setLoading(true);
 
+    const passcodeHash: string = await hashPasscode(deletePasscode);
+
     const res = await fetch("/api/pocket/delete-pocket", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instanceHash, deletePasscode }),
+      body: JSON.stringify({ instanceHash, passcodeHash }),
     });
 
     const data = await res.json();
