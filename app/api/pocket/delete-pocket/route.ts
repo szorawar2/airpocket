@@ -6,13 +6,13 @@ import path from "path";
 const baseDir = path.join(process.cwd(), "pocket_files");
 
 export async function POST(req: Request) {
-  const { instanceHash, passcode } = await req.json();
+  const { instanceHash, passcodeHash } = await req.json();
 
-  if (!instanceHash || !passcode || passcode.length !== 6) {
+  if (!instanceHash || !passcodeHash || passcodeHash.length !== 64) {
     return Response.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  // fetch stored hash
+  // fetch stored instance
   const { rows } = await pool.query(
     `SELECT passcode_hash FROM pockets WHERE instance_hash = $1`,
     [instanceHash],
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const valid = await bcrypt.compare(passcode, rows[0].passcode_hash);
+  const valid = await bcrypt.compare(passcodeHash, rows[0].passcode_hash);
 
   if (!valid) {
     return Response.json({ error: "Invalid passcode" }, { status: 401 });

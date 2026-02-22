@@ -27,7 +27,6 @@ export default function InputBar({
 
   const [text, setText] = useState<string>("");
   const [files, setFiles] = useState<UploadFile[]>([]);
-  const formDataRef = useRef<FormData | null>(null);
 
   const [showInputBar, setShowInputBar] = useState(false);
 
@@ -104,55 +103,13 @@ export default function InputBar({
     batchId = data.batchId;
 
     for (const file of files) {
-      await uploadFileChunked(file, instanceHash, batchId);
+      await uploadFileChunked(file, instanceHash, batchId, setGeneralError);
     }
 
     setText("");
     setFiles([]);
     setRefreshKey((key) => (key += 1));
   }
-
-  // async function submit(e: React.FormEvent) {
-  //   e.preventDefault();
-
-  //   if (!encryptionKey || !(encryptionKey instanceof CryptoKey)) {
-  //     setGeneralError("Encryption key not available");
-  //     return;
-  //   }
-
-  //   const { ciphertext, iv } = await encryptMessage(
-  //     encryptionKey as CryptoKey,
-  //     text,
-  //   );
-
-  //   const fd = new FormData();
-  //   fd.set("instanceHash", instanceHash);
-  //   fd.set("ciphertext", await toBase64(ciphertext));
-  //   fd.set("iv", await toBase64(iv));
-  //   files.forEach(async (f) => {
-  //     fd.append("files", f.file);
-  //     fd.append("burns", String(f.burn));
-  //     fd.append("ivs", await toBase64(f.iv));
-  //   });
-
-  //   formDataRef.current = fd;
-
-  //   const res = await fetch("/api/pocket/upload", {
-  //     method: "POST",
-  //     body: fd,
-  //   });
-
-  //   if (!res.ok) {
-  //     setGeneralError("Upload failed. Please try again.");
-  //     return;
-  //   }
-
-  //   setText("");
-  //   setFiles([]);
-  //   setShowInputBar(false);
-
-  //   setRefreshKey((key) => (key += 1));
-  // }
 
   return (
     <>
@@ -274,36 +231,55 @@ async function uploadFileChunked(
   file: UploadFile,
   instanceHash: string,
   batchId: string,
+  setGeneralError?: React.Dispatch<React.SetStateAction<string | null>>,
 ) {
-  const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+  const CHUNK_SIZE = 5 * 1024 * 1024;
   const encryptedFile = file.file;
 
   const totalChunks = Math.ceil(encryptedFile.size / CHUNK_SIZE);
 
   let generatedFileName: string | null = null;
 
-  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-    const start = chunkIndex * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, encryptedFile.size);
+  try {
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, encryptedFile.size);
+      const chunk = encryptedFile.slice(start, end);
 
-    const chunk = encryptedFile.slice(start, end);
+      const res = await fetch("/api/pocket/upload-file", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "x-instance-hash": instanceHash,
+          "x-batch-id": batchId,
+          "x-chunk-index": chunkIndex.toString(),
+          "x-total-chunks": totalChunks.toString(),
+          "x-iv": await toBase64(file.iv),
+          "x-burn": String(file.burn),
+          "x-filename": encryptedFile.name,
+          "x-generated-filename": generatedFileName ?? "",
+        },
+        body: chunk,
+      });
 
-    const res: any = await fetch("/api/pocket/upload-file", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "x-instance-hash": instanceHash,
-        "x-batch-id": batchId,
-        "x-chunk-index": chunkIndex.toString(),
-        "x-total-chunks": totalChunks.toString(),
-        "x-iv": await toBase64(file.iv),
-        "x-burn": String(file.burn),
-        "x-filename": encryptedFile.name,
-        "x-generated-filename": generatedFileName ?? "",
-      },
-      body: chunk,
-    });
+      if (!res.ok) {
+        throw new Error(`Server error (${res.status})`);
+      }
 
-    generatedFileName = await res.json().generatedFileName;
+      const data: any = await res.json();
+      generatedFileName = data.generatedFileName;
+    }
+  } catch (err) {
+    if (setGeneralError) {
+      setGeneralError((prev) => {
+        const fileError = `Error Uploading: ${encryptedFile.name}`;
+
+        if (!prev) return fileError;
+
+        if (prev.includes(encryptedFile.name)) return prev;
+
+        return `${prev}\n${fileError}`;
+      });
+    }
   }
 }

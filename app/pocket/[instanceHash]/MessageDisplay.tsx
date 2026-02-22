@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import type { Message, MessageDTO, FileItem } from "@/types/messageType";
-import { fromBase64, decryptMessage } from "@/app/api/lib/hash";
+import { decryptFile, decryptMessage } from "@/app/api/lib/hash";
 import { useAuth } from "@/context/PocketContext";
 
 export default function MessageDisplay({
@@ -104,16 +104,17 @@ export default function MessageDisplay({
                       instanceHash={instanceHash}
                       m={m}
                       file={file}
+                      encryptionKey={encryptionKey}
                     />
                   ))}
-                  {m.files.length > 1 && (
+                  {/* {m.files.length > 1 && (
                     <a
                       href={`/api/pocket/download-batch?instance_hash=${instanceHash}&batch_id=${m.batch_id}`}
                       className="bg-col0 p-1 px-4 rounded-lg text-col4 font-semibold mt-2 inline-block cursor-pointer"
                     >
                       Download all
                     </a>
-                  )}
+                  )} */}
                 </div>
               </div>
             </>
@@ -128,22 +129,52 @@ function DownloadLink({
   instanceHash,
   m,
   file,
+  encryptionKey,
 }: {
   instanceHash: string;
   m: Message;
   file: FileItem;
+  encryptionKey: CryptoKey | null;
 }) {
   const [deleted, setDeleted] = useState(false);
 
+  async function handleDownload() {
+    try {
+      const res = await fetch(
+        `/api/pocket/download?instance_hash=${instanceHash}&file_id=${file.file_id}&batch_id=${m.batch_id}`,
+      );
+
+      const ivBase64 = res.headers.get("x-iv");
+      if (!ivBase64) throw new Error("Missing IV");
+
+      const encryptedBuffer = await res.arrayBuffer();
+
+      const blob = await decryptFile(encryptedBuffer, encryptionKey!, ivBase64);
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.original_file_name;
+      a.click();
+
+      URL.revokeObjectURL(url);
+
+      if (file.burn) {
+        setDeleted(true);
+      }
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
+  }
+
   return (
-    <div className="flex space-4">
-      <a
-        href={`/api/pocket/download?instance_hash=${instanceHash}&file_id=${file.file_id}&batch_id=${m.batch_id}`}
-        className="text-col2 underline pb-1 "
-        onClick={() => setDeleted((d) => (d == false ? true : true))}
+    <div className="flex space-x-4">
+      <button
+        onClick={handleDownload}
+        className="text-col2 underline pb-1 cursor-pointer"
       >
         {file.original_file_name}
-      </a>
+      </button>
 
       {file.burn && deleted && <p>deleted after download</p>}
     </div>
