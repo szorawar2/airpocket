@@ -46,6 +46,7 @@ export default function EnterClient() {
       return;
     }
 
+    sessionStorage.setItem("ap_passcode", passcode);
     setContextPasscode(passcodeHash);
 
     const { instanceHash } = await res.json();

@@ -30,31 +30,6 @@ export default function CreateClient() {
     reservePocket();
   }, []);
 
-  // async function deriveKey(passcode: string, pocketId: string) {
-  //   const enc = new TextEncoder();
-
-  //   const baseKey = await crypto.subtle.importKey(
-  //     "raw",
-  //     enc.encode(passcode),
-  //     "PBKDF2",
-  //     false,
-  //     ["deriveKey"],
-  //   );
-
-  //   return crypto.subtle.deriveKey(
-  //     {
-  //       name: "PBKDF2",
-  //       salt: enc.encode(pocketId),
-  //       iterations: 100_000,
-  //       hash: "SHA-256",
-  //     },
-  //     baseKey,
-  //     { name: "AES-GCM", length: 256 },
-  //     false,
-  //     ["encrypt", "decrypt"],
-  //   );
-  // }
-
   async function finalizePocket() {
     if (!pocketId || passcode.length !== 6) return;
 
@@ -77,7 +52,7 @@ export default function CreateClient() {
       return;
     }
 
-    localStorage.setItem("passcode", passcode);
+    sessionStorage.setItem("ap_passcode", passcode);
 
     setContextPasscode(passcode);
 
