@@ -2,14 +2,17 @@
 
 import { useState, useRef } from "react";
 import CloseIcon from "@/components/misc/CloseIcon";
+import { useAuth } from "@/context/PocketContext";
+import { encryptMessage, toBase64, encryptFile } from "@/app/api/lib/hash";
 
 type UploadFile = {
   file: File;
   burn: boolean;
+  iv: Uint8Array;
 };
 
 const MAX_FILES = 15;
-const MAX_SIZE = 1024 * 1024 * 1024; // 1GB
+const MAX_SIZE = 200 * 1024 * 1024; // 200MB
 
 export default function InputBar({
   instanceHash,
@@ -20,68 +23,136 @@ export default function InputBar({
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   setGeneralError: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
-  const [text, setText] = useState("");
+  const { encryptionKey } = useAuth();
+
+  const [text, setText] = useState<string>("");
   const [files, setFiles] = useState<UploadFile[]>([]);
   const formDataRef = useRef<FormData | null>(null);
 
   const [showInputBar, setShowInputBar] = useState(false);
 
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const inputFiles = Array.from(e.target.files ?? []);
 
     if (inputFiles.length > MAX_FILES) {
       alert("Max 15 files per message");
+      e.target.value = "";
       return;
     }
+
+    let totalSize = 0;
 
     for (const file of inputFiles) {
       if (file.size > MAX_SIZE) {
-        alert(`${file.name} exceeds 1GB limit`);
+        alert(`${file.name} exceeds 200MB limit`);
+        e.target.value = "";
         return;
       }
+
+      totalSize += file.size;
     }
 
-    const selected: UploadFile[] = [];
+    if (totalSize > 500 * 1024 * 1024) {
+      alert("Total upload size cannot exceed 500MB");
+      e.target.value = "";
+      return;
+    }
+
+    setFiles([]);
 
     for (const f of inputFiles) {
-      selected.push({
-        file: f,
-        burn: false,
+      const { encryptedBlob, iv } = await encryptFile(
+        f,
+        encryptionKey as CryptoKey,
+      );
+
+      const encryptedFile = new File([encryptedBlob], f.name, {
+        type: "application/octet-stream",
       });
+
+      setFiles((prev) => [
+        ...prev,
+        {
+          file: encryptedFile,
+          burn: false,
+          iv,
+        },
+      ]);
     }
 
-    setFiles(selected);
+    e.target.value = "";
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const fd = new FormData();
-    fd.set("instanceHash", instanceHash);
-    fd.set("text", text);
-    files.forEach((f) => {
-      fd.append("files", f.file);
-      fd.append("burn", String(f.burn));
-    });
+  async function submit() {
+    if (!encryptionKey) return;
 
-    formDataRef.current = fd;
+    let batchId = null;
 
-    const res = await fetch("/api/pocket/upload", {
+    const { ciphertext, iv } = await encryptMessage(encryptionKey, text);
+
+    const res = await fetch("/api/pocket/upload-text", {
       method: "POST",
-      body: fd,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        instanceHash,
+        ciphertext: text?.trim() ? await toBase64(ciphertext) : "",
+        iv: text?.trim() ? await toBase64(iv) : "",
+      }),
     });
 
-    if (!res.ok) {
-      console.error("Upload failed");
-      setGeneralError("Upload failed. Please try again.");
-      return;
+    const data = await res.json();
+    batchId = data.batchId;
+
+    for (const file of files) {
+      await uploadFileChunked(file, instanceHash, batchId);
     }
 
     setText("");
     setFiles([]);
-    setShowInputBar(false);
-
     setRefreshKey((key) => (key += 1));
   }
+
+  // async function submit(e: React.FormEvent) {
+  //   e.preventDefault();
+
+  //   if (!encryptionKey || !(encryptionKey instanceof CryptoKey)) {
+  //     setGeneralError("Encryption key not available");
+  //     return;
+  //   }
+
+  //   const { ciphertext, iv } = await encryptMessage(
+  //     encryptionKey as CryptoKey,
+  //     text,
+  //   );
+
+  //   const fd = new FormData();
+  //   fd.set("instanceHash", instanceHash);
+  //   fd.set("ciphertext", await toBase64(ciphertext));
+  //   fd.set("iv", await toBase64(iv));
+  //   files.forEach(async (f) => {
+  //     fd.append("files", f.file);
+  //     fd.append("burns", String(f.burn));
+  //     fd.append("ivs", await toBase64(f.iv));
+  //   });
+
+  //   formDataRef.current = fd;
+
+  //   const res = await fetch("/api/pocket/upload", {
+  //     method: "POST",
+  //     body: fd,
+  //   });
+
+  //   if (!res.ok) {
+  //     setGeneralError("Upload failed. Please try again.");
+  //     return;
+  //   }
+
+  //   setText("");
+  //   setFiles([]);
+  //   setShowInputBar(false);
+
+  //   setRefreshKey((key) => (key += 1));
+  // }
 
   return (
     <>
@@ -126,7 +197,7 @@ export default function InputBar({
         >
           <CloseIcon className={"var(--color-col2)"}></CloseIcon>
         </button>
-        <form onSubmit={submit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           {/* text input */}
           <input
             type="text"
@@ -186,14 +257,53 @@ export default function InputBar({
 
           <div className="flex gap-3">
             <button
-              type="submit"
+              // type="submit"
+              onClick={submit}
               className="rounded-lg bg-col3 px-6 py-3 text-white hover:bg-col2 transition font-semibold cursor-pointer"
             >
               Upload
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </>
   );
+}
+
+async function uploadFileChunked(
+  file: UploadFile,
+  instanceHash: string,
+  batchId: string,
+) {
+  const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+  const encryptedFile = file.file;
+
+  const totalChunks = Math.ceil(encryptedFile.size / CHUNK_SIZE);
+
+  let generatedFileName: string | null = null;
+
+  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+    const start = chunkIndex * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, encryptedFile.size);
+
+    const chunk = encryptedFile.slice(start, end);
+
+    const res: any = await fetch("/api/pocket/upload-file", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "x-instance-hash": instanceHash,
+        "x-batch-id": batchId,
+        "x-chunk-index": chunkIndex.toString(),
+        "x-total-chunks": totalChunks.toString(),
+        "x-iv": await toBase64(file.iv),
+        "x-burn": String(file.burn),
+        "x-filename": encryptedFile.name,
+        "x-generated-filename": generatedFileName ?? "",
+      },
+      body: chunk,
+    });
+
+    generatedFileName = await res.json().generatedFileName;
+  }
 }

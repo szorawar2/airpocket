@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import type { Message, FileItem } from "@/types/messageType";
+import type { Message, MessageDTO, FileItem } from "@/types/messageType";
+import { fromBase64, decryptMessage } from "@/app/api/lib/hash";
+import { useAuth } from "@/context/PocketContext";
 
 export default function MessageDisplay({
   instanceHash,
@@ -13,8 +15,10 @@ export default function MessageDisplay({
   setRefreshKey: React.Dispatch<React.SetStateAction<number>>;
   setGeneralError: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
-  const [content, setContent] = useState<Message[]>([]);
+  const [content, setContent] = useState<MessageDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [decryptedContent, setDecryptedContent] = useState<Message[]>([]);
+  const { encryptionKey } = useAuth();
 
   useEffect(() => {
     async function load() {
@@ -38,14 +42,44 @@ export default function MessageDisplay({
     load();
   }, [instanceHash, refreshKey]);
 
+  useEffect(() => {
+    if (!encryptionKey || !content) return;
+
+    async function decryptAll() {
+      const updated = await Promise.all(
+        content.map(async (m) => {
+          if (!m.ciphertext || !m.iv || encryptionKey == null) {
+            return {
+              batch_id: m.batch_id,
+              text: null,
+              files: m.files,
+            };
+          }
+
+          const text = await decryptMessage(encryptionKey, m.ciphertext, m.iv);
+
+          return {
+            batch_id: m.batch_id,
+            text,
+            files: m.files,
+          };
+        }),
+      );
+
+      setDecryptedContent(updated);
+    }
+
+    decryptAll();
+  }, [content, encryptionKey]);
+
   if (loading) return <div>Loading…</div>;
 
   return (
     <div className=" bg-background2 rounded-xl p-4 pt-8 space-y-2 md:mx-12 flex flex-col ">
-      {content.length === 0 && (
+      {decryptedContent.length === 0 && (
         <div className="text-col3 px-6">No notes yet</div>
       )}
-      {content.map((m, i) => (
+      {decryptedContent.map((m, i) => (
         <div
           key={m.batch_id}
           className=" bg-background rounded-xl p-4 mb-6 md:mx-6"

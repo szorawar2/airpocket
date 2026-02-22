@@ -6,7 +6,8 @@ import MessageDisplay from "./MessageDisplay";
 import InputBar from "./InputBar";
 import PasscodePrompt from "./PasscodePrompt";
 import { useAuth } from "@/context/PocketContext";
-import { hashPasscode } from "@/app/api/lib/hash";
+import { hashPasscode, deriveKey, fromBase64 } from "@/app/api/lib/hash";
+import { verify } from "crypto";
 
 export default function ClientPage({
   instanceHash,
@@ -17,36 +18,45 @@ export default function ClientPage({
   pocketId: string;
   expiresAt: string;
 }) {
-  const { contextPasscode, setContextPasscode } = useAuth();
+  const { contextPasscode, setContextPasscode, setEncryptionKey } = useAuth();
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
     if (!contextPasscode || typeof contextPasscode != "string") return;
 
     async function verify() {
-      const hash = await hashPasscode(contextPasscode as string);
+      try {
+        const passcodeHash = await hashPasscode(contextPasscode as string);
 
-      const res = await fetch("/api/pocket/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          instanceHash,
-          passcodeHash: hash,
-        }),
-      });
+        const res = await fetch("/api/pocket/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instanceHash,
+            passcodeHash: passcodeHash,
+          }),
+        });
 
-      if (!res.ok) {
-        setGeneralError("Invalid passcode");
-        setContextPasscode(null);
+        if (!res.ok) {
+          setGeneralError("Invalid passcode");
+          setContextPasscode(null);
+          setVerified(false);
+          return;
+        }
 
-        return (
-          <PasscodePrompt instanceHash={instanceHash} pocketId={pocketId} />
-        );
-      }
+        const data = await res.json();
+        const pocket_salt = await fromBase64(data.pocket_salt);
+
+        const key = await deriveKey(contextPasscode as string, pocket_salt);
+
+        setEncryptionKey(key);
+        setVerified(true);
+      } catch (error) {}
     }
 
     verify();
-  }, [contextPasscode]);
+  }, [contextPasscode, instanceHash]);
 
   //Delete Pocket
   const [showDelete, setShowDelete] = useState(false);
@@ -85,6 +95,10 @@ export default function ClientPage({
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, [expiresAt]);
+
+  if (!contextPasscode || typeof contextPasscode != "string") {
+    return <PasscodePrompt instanceHash={instanceHash} pocketId={pocketId} />;
+  }
 
   return (
     <div

@@ -77,7 +77,7 @@ export default function CreateClient() {
       return;
     }
 
-    // const key = await deriveKey(passcode, pocketId);
+    localStorage.setItem("passcode", passcode);
 
     setContextPasscode(passcode);
 
