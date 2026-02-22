@@ -2,7 +2,10 @@ import { pool } from "./db.node.js";
 import fs from "fs/promises";
 import path from "path";
 
-const baseDir = path.join(process.cwd(), "../pocket_files");
+const baseDir =
+  process.env.NODE_ENV === "production"
+    ? "/app/pocket_files"
+    : path.join(process.cwd(), "../pocket_files");
 
 async function cleanup() {
   // Delete expired pocket directories and related files

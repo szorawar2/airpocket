@@ -25,10 +25,13 @@ export async function deriveKey(passcode: string, salt: Uint8Array) {
     ["deriveKey"],
   );
 
+  // Ensure salt uses a regular ArrayBuffer, not SharedArrayBuffer
+  const normalizedSalt = new Uint8Array(salt);
+
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt,
+      salt: normalizedSalt,
       iterations: 100_000,
       hash: "SHA-256",
     },

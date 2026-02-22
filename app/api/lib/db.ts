@@ -13,7 +13,7 @@ export const pool =
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: Number(process.env.DB_PORT),
-    ssl: false, // local dev
+    ssl: false,
   });
 
 if (process.env.NODE_ENV !== "production") {
