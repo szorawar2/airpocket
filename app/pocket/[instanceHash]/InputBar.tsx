@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useRef } from "react";
-import CloseIcon from "@/components/misc/CloseIcon";
-import { useAuth } from "@/context/PocketContext";
-import { encryptMessage, toBase64, encryptFile } from "@/app/api/lib/hash";
+import { useState, useRef } from 'react';
+import CloseIcon from '@/components/misc/CloseIcon';
+import { useAuth } from '@/context/PocketContext';
+import { encryptMessage, toBase64, encryptFile } from '@/app/api/lib/hash';
 
 type UploadFile = {
   file: File;
@@ -25,7 +25,7 @@ export default function InputBar({
 }) {
   const { encryptionKey } = useAuth();
 
-  const [text, setText] = useState<string>("");
+  const [text, setText] = useState<string>('');
   const [files, setFiles] = useState<UploadFile[]>([]);
 
   const [showInputBar, setShowInputBar] = useState(false);
@@ -34,8 +34,8 @@ export default function InputBar({
     const inputFiles = Array.from(e.target.files ?? []);
 
     if (inputFiles.length > MAX_FILES) {
-      alert("Max 15 files per message");
-      e.target.value = "";
+      alert('Max 15 files per message');
+      e.target.value = '';
       return;
     }
 
@@ -44,7 +44,7 @@ export default function InputBar({
     for (const file of inputFiles) {
       if (file.size > MAX_SIZE) {
         alert(`${file.name} exceeds 200MB limit`);
-        e.target.value = "";
+        e.target.value = '';
         return;
       }
 
@@ -52,8 +52,8 @@ export default function InputBar({
     }
 
     if (totalSize > 500 * 1024 * 1024) {
-      alert("Total upload size cannot exceed 500MB");
-      e.target.value = "";
+      alert('Total upload size cannot exceed 500MB');
+      e.target.value = '';
       return;
     }
 
@@ -66,7 +66,7 @@ export default function InputBar({
       );
 
       const encryptedFile = new File([encryptedBlob], f.name, {
-        type: "application/octet-stream",
+        type: 'application/octet-stream',
       });
 
       setFiles((prev) => [
@@ -79,7 +79,7 @@ export default function InputBar({
       ]);
     }
 
-    e.target.value = "";
+    e.target.value = '';
   }
 
   async function submit() {
@@ -89,13 +89,13 @@ export default function InputBar({
 
     const { ciphertext, iv } = await encryptMessage(encryptionKey, text);
 
-    const res = await fetch("/api/pocket/upload-text", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/pocket/upload-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         instanceHash,
-        ciphertext: text?.trim() ? await toBase64(ciphertext) : "",
-        iv: text?.trim() ? await toBase64(iv) : "",
+        ciphertext: text?.trim() ? await toBase64(ciphertext) : '',
+        iv: text?.trim() ? await toBase64(iv) : '',
       }),
     });
 
@@ -106,7 +106,7 @@ export default function InputBar({
       await uploadFileChunked(file, instanceHash, batchId, setGeneralError);
     }
 
-    setText("");
+    setText('');
     setFiles([]);
     setRefreshKey((key) => (key += 1));
   }
@@ -118,10 +118,9 @@ export default function InputBar({
         absolute left-0 right-0 bottom-0
         p-4
         bg-background
-        border-t border-gray-200
         transition-all duration-500 ease-out
         transform
-        ${!showInputBar ? " opacity-100" : " opacity-0"}`}
+        ${!showInputBar ? ' opacity-100' : ' opacity-0'}`}
       >
         <button
           className="w-3/10 min-w-30 border-2 rounded-lg border-col2 text-col2 p-2 hover:bg-col2 hover:text-white cursor-pointer"
@@ -145,14 +144,14 @@ export default function InputBar({
         border-t border-gray-200
         transition-all duration-500 ease-out
         transform
-        ${showInputBar ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}
+        ${showInputBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
         `}
       >
         <button
           className="border-2 border-col2 w-fit p-1 mb-4 rounded-lg text-white font-semibold cursor-pointer"
           onClick={() => setShowInputBar(false)}
         >
-          <CloseIcon className={"var(--color-col2)"}></CloseIcon>
+          <CloseIcon className={'var(--color-col2)'}></CloseIcon>
         </button>
         <div className="flex flex-col gap-4">
           {/* text input */}
@@ -246,18 +245,18 @@ async function uploadFileChunked(
       const end = Math.min(start + CHUNK_SIZE, encryptedFile.size);
       const chunk = encryptedFile.slice(start, end);
 
-      const res = await fetch("/api/pocket/upload-file", {
-        method: "POST",
+      const res = await fetch('/api/pocket/upload-file', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/octet-stream",
-          "x-instance-hash": instanceHash,
-          "x-batch-id": batchId,
-          "x-chunk-index": chunkIndex.toString(),
-          "x-total-chunks": totalChunks.toString(),
-          "x-iv": await toBase64(file.iv),
-          "x-burn": String(file.burn),
-          "x-filename": encryptedFile.name,
-          "x-generated-filename": generatedFileName ?? "",
+          'Content-Type': 'application/octet-stream',
+          'x-instance-hash': instanceHash,
+          'x-batch-id': batchId,
+          'x-chunk-index': chunkIndex.toString(),
+          'x-total-chunks': totalChunks.toString(),
+          'x-iv': await toBase64(file.iv),
+          'x-burn': String(file.burn),
+          'x-filename': encryptedFile.name,
+          'x-generated-filename': generatedFileName ?? '',
         },
         body: chunk,
       });

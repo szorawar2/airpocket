@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { QRCodeSVG } from "qrcode.react";
-import MessageDisplay from "./MessageDisplay";
-import InputBar from "./InputBar";
-import PasscodePrompt from "./PasscodePrompt";
-import { useAuth } from "@/context/PocketContext";
-import { hashPasscode, deriveKey, fromBase64 } from "@/app/api/lib/hash";
-import { verify } from "crypto";
+import { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import MessageDisplay from './MessageDisplay';
+import InputBar from './InputBar';
+import PasscodePrompt from './PasscodePrompt';
+import { useAuth } from '@/context/PocketContext';
+import { hashPasscode, deriveKey, fromBase64 } from '@/app/api/lib/hash';
+import { verify } from 'crypto';
 
 export default function ClientPage({
   instanceHash,
@@ -23,15 +23,15 @@ export default function ClientPage({
   const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    if (!contextPasscode || typeof contextPasscode != "string") return;
+    if (!contextPasscode || typeof contextPasscode != 'string') return;
 
     async function verify() {
       try {
         const passcodeHash = await hashPasscode(contextPasscode as string);
 
-        const res = await fetch("/api/pocket/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch('/api/pocket/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             instanceHash,
             passcodeHash: passcodeHash,
@@ -39,7 +39,7 @@ export default function ClientPage({
         });
 
         if (!res.ok) {
-          setGeneralError("Invalid passcode");
+          setGeneralError('Invalid passcode');
           setContextPasscode(null);
           setVerified(false);
           return;
@@ -60,7 +60,7 @@ export default function ClientPage({
 
   //Delete Pocket
   const [showDelete, setShowDelete] = useState(false);
-  const [deletePasscode, setDeletePasscode] = useState("");
+  const [deletePasscode, setDeletePasscode] = useState('');
 
   //Extend Pocket
   const [showExtend, setShowExtend] = useState(false);
@@ -72,13 +72,13 @@ export default function ClientPage({
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
   //Time display
-  const [timeLeft, setTimeLeft] = useState("");
+  const [timeLeft, setTimeLeft] = useState('');
   useEffect(() => {
     function update() {
       const diff = new Date(expiresAt).getTime() - Date.now();
 
       if (diff <= 0) {
-        setTimeLeft("Expired");
+        setTimeLeft('Expired');
         return;
       }
 
@@ -87,7 +87,7 @@ export default function ClientPage({
       const minutes = totalMinutes % 60;
 
       setTimeLeft(
-        `${String(hours).padStart(2, "0")} hrs ${String(minutes).padStart(2, "0")} min`,
+        `${String(hours).padStart(2, '0')} hrs ${String(minutes).padStart(2, '0')} min`,
       );
     }
 
@@ -96,7 +96,7 @@ export default function ClientPage({
     return () => clearInterval(id);
   }, [expiresAt]);
 
-  if (!contextPasscode || typeof contextPasscode != "string") {
+  if (!contextPasscode || typeof contextPasscode != 'string') {
     return <PasscodePrompt instanceHash={instanceHash} pocketId={pocketId} />;
   }
 
@@ -201,26 +201,26 @@ function DeletePopup({
 
     const passcodeHash: string = await hashPasscode(deletePasscode);
 
-    const res = await fetch("/api/pocket/delete-pocket", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/pocket/delete-pocket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ instanceHash, passcodeHash }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      setDeleteError(data.error || "Failed to delete pocket");
+      setDeleteError(data.error || 'Failed to delete pocket');
       setLoading(false);
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = '/';
   }
 
   return (
     <div className="fixed z-2 inset-0 bg-black/50 flex items-center justify-center ">
-      <div className="bg-white p-6 rounded space-y-4 rounded-xl w-80">
+      <div className="bg-background p-6 rounded space-y-4 rounded-xl w-80">
         <h2 className="text-xl font-semibold pb-2 text-col4">Delete pocket</h2>
 
         <div>
@@ -231,7 +231,7 @@ function DeletePopup({
             maxLength={6}
             value={deletePasscode}
             onChange={(e) =>
-              setDeletePasscode(e.target.value.replace(/\D/g, ""))
+              setDeletePasscode(e.target.value.replace(/\D/g, ''))
             }
             className="border px-3 py-2 w-full mb-6 rounded-lg outline-col2"
             placeholder="Enter deletePasscode"
@@ -274,9 +274,9 @@ function ExtendPocketPopup({
   async function extendPocket() {
     setLoading(true);
 
-    const res = await fetch("/api/pocket/extend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/pocket/extend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         instanceHash,
         expiresIn: expiresIn,
@@ -286,7 +286,7 @@ function ExtendPocketPopup({
     const data = await res.json();
 
     if (!res.ok) {
-      setError(data.error || "Failed to extend pocket");
+      setError(data.error || 'Failed to extend pocket');
       setLoading(false);
       return;
     }
@@ -298,7 +298,7 @@ function ExtendPocketPopup({
 
   return (
     <div className="fixed z-2 inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded rounded-xl w-80">
+      <div className="bg-background p-6 rounded rounded-xl w-80">
         <h2 className="font-semibold text-lg text-col4">Extend pocket</h2>
         <p className="italic pb-4 text-col3 font-[Open_sans]">
           max pocket duration is 3 days
@@ -309,7 +309,7 @@ function ExtendPocketPopup({
           <select
             value={expiresIn}
             onChange={(e) => setExpiresIn(Number(e.target.value))}
-            className="w-full border px-3 p-2 mb-6 rounded cursor-pointer font-[Raleway] "
+            className="w-full border bg-background2 px-3 p-2 mb-6 rounded cursor-pointer font-[Raleway] "
           >
             <option value={15}>15 mins</option>
             <option value={30}>30 mins</option>
@@ -352,14 +352,14 @@ function QrPopup({
 }) {
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | Number | null>(null);
-  const [timeLeft, setTimeLeft] = useState("");
+  const [timeLeft, setTimeLeft] = useState('');
 
   // generate QR when popup appears (mount)
   useEffect(() => {
     async function generateQr() {
-      const res = await fetch("/api/pocket/generate-qr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/pocket/generate-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ instanceHash }),
       });
 
@@ -380,13 +380,13 @@ function QrPopup({
       const diff = time - Date.now();
 
       if (diff <= 0) {
-        setTimeLeft("Expired");
+        setTimeLeft('Expired');
         return;
       }
 
       const minutes = Math.floor(diff / 60000);
 
-      setTimeLeft(`${String(minutes).padStart(2, "0")} minutes`);
+      setTimeLeft(`${String(minutes).padStart(2, '0')} minutes`);
     }
 
     update();
@@ -396,19 +396,21 @@ function QrPopup({
 
   return (
     <div className="fixed z-2 inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded space-y-4 text-center w-80 flex flex-col items-center rounded-lg">
+      <div className="bg-background p-6 rounded space-y-4 text-center w-80 flex flex-col items-center rounded-lg">
         <div>
           <h2 className="font-semibold text-lg text-col4">Pocket QR</h2>
           <p className="text-sm text-col2">
-            {timeLeft ? `Expires in ${timeLeft}` : "Generating…"}
+            {timeLeft ? `Expires in ${timeLeft}` : 'Generating…'}
           </p>
         </div>
 
-        {qrUrl ? (
-          <QRCodeSVG value={qrUrl} size={200} />
-        ) : (
-          <p className="text-sm text-gray-400">Generating…</p>
-        )}
+        <div className="p-3 rounded-lg bg-background2">
+          {qrUrl ? (
+            <QRCodeSVG value={qrUrl} size={200} />
+          ) : (
+            <p className="text-sm text-gray-400">Generating…</p>
+          )}
+        </div>
 
         <button
           onClick={onClose}
